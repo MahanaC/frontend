@@ -13,22 +13,20 @@ define([
     'raw-loader!common/views/experiments/tailor-survey.html',
     'lib/fetch-json',
     'lodash/collections/forEach'
-], function (
-    bean,
-    bonzo,
-    fastdom,
-    Promise,
-    debounce,
-    config,
-    cookies,
-    storage,
-    mediator,
-    fastdomPromise,
-    privateBrowsing,
-    quickSurvey,
-    fetchJson,
-    forEach
-) {
+], function (bean,
+             bonzo,
+             fastdom,
+             Promise,
+             debounce,
+             config,
+             cookies,
+             storage,
+             mediator,
+             fastdomPromise,
+             privateBrowsing,
+             quickSurvey,
+             fetchJson,
+             forEach) {
     return function () {
         this.id = 'TailorSurvey';
         this.start = '2017-01-25';
@@ -59,11 +57,11 @@ define([
         function handleSurveySuggestions(response) {
             if (response.suggestions) {
 
-                var surveySuggestions = response.suggestions.filter(function(suggestion) {
+                var surveySuggestions = response.suggestions.filter(function (suggestion) {
                     return suggestion.class == 'SurveySuggestion';
                 });
 
-                if(surveySuggestions){
+                if (surveySuggestions) {
                     var surveySuggestionToShow = surveySuggestions[0];
                     var id = surveySuggestionToShow.data.survey.surveyId;
                     var dayCanShowAgain = surveySuggestionToShow.data.dayCanShowAgain;
@@ -94,43 +92,40 @@ define([
 
             var values = currentCookieValues ? currentCookieValues.split(',') : [];
 
-            var isAfterToday = function(cookieValue) {
+            var isAfterToday = function (cookieValue) {
                 var date = cookieValue.split('=')[1];
                 return new Date(date).valueOf() > new Date().valueOf();
             };
 
             var surveysWeCannotShow = values.filter(isAfterToday);
 
-            var ids = surveysWeCannotShow.map(function(idAndDate) {
+            var ids = surveysWeCannotShow.map(function (idAndDate) {
                 return idAndDate.split('=')[0]
             }).toString();
-
 
 
             if (bwid) {
                 return callTailor(bwid, ids).then(function (response) {
                     console.log(response);
-                    if (response.userDataForClient.regular) {
 
-                        handleSurveySuggestions(response);
+                    handleSurveySuggestions(response);
 
-                        // renders the survey
-                        return fastdomPromise.write(function () {
-                            var article = document.getElementsByClassName('content__article-body')[0];
-                            var insertionPoint = article.getElementsByTagName('p')[1];
-                            var surveyDiv = document.createElement('div');
-                            surveyDiv.innerHTML = quickSurvey;
-                            article.insertBefore(surveyDiv, insertionPoint);
-                        });
-                    }
+                    // renders the survey
+                    return fastdomPromise.write(function () {
+                        var article = document.getElementsByClassName('content__article-body')[0];
+                        var insertionPoint = article.getElementsByTagName('p')[1];
+                        var surveyDiv = document.createElement('div');
+                        surveyDiv.innerHTML = quickSurvey;
+                        article.insertBefore(surveyDiv, insertionPoint);
+                    });
                 });
             }
         }
 
         function disableRadioButtons(buttonClassName) {
             var radioButtons = document.getElementsByClassName(buttonClassName);
-            bonzo(radioButtons).each(function(button) {
-                button.disabled=true;
+            bonzo(radioButtons).each(function (button) {
+                button.disabled = true;
             });
         }
 
@@ -147,20 +142,20 @@ define([
         function handleSurveyResponse() {
             var surveyQuestions = document.getElementsByClassName('fi-survey__button');
 
-            forEach(surveyQuestions, function(question) {
-                bean.on(question, 'click', function (event) {
-                    if (event.target.attributes.getNamedItem("data-link-name")) {
-                        var answer = event.target.attributes.getNamedItem("data-link-name").value;
-                        recordOphanAbEvent(answer);
+            forEach(surveyQuestions, function (question) {
+                    bean.on(question, 'click', function (event) {
+                        if (event.target.attributes.getNamedItem("data-link-name")) {
+                            var answer = event.target.attributes.getNamedItem("data-link-name").value;
+                            recordOphanAbEvent(answer);
 
-                        mediator.emit('tailor:survey:clicked');
-                        fastdom.write(function () {
-                            disableRadioButtons('fi-survey__button');
-                            surveyFadeOut();
-                            thankyouFadeIn();
-                        });
-                    }
-                });
+                            mediator.emit('tailor:survey:clicked');
+                            fastdom.write(function () {
+                                disableRadioButtons('fi-survey__button');
+                                surveyFadeOut();
+                                thankyouFadeIn();
+                            });
+                        }
+                    });
                 }
             );
         }
@@ -184,16 +179,17 @@ define([
             {
                 id: 'variant',
                 test: function () {
+                    cookies.add("bwid", "KhaK6MqWrTTNyPkt8dVyf1SA", 365)
                     console.log('variant!');
                     Promise.all([renderQuickSurvey(), privateBrowsing]).then(function () {
                         mediator.emit('survey-added');
                         handleSurveyResponse();
                     });
                 },
-                impression: function(track) {
+                impression: function (track) {
                     mediator.on('survey-added', track);
                 },
-                success: function(complete) {
+                success: function (complete) {
                     mediator.on('tailor:survey:clicked', complete);
                 }
             }
