@@ -58,27 +58,31 @@ define([
 
         function handleSurveySuggestions(response) {
             if (response.suggestions) {
-                forEach(response.suggestions, function(suggestion) {
-                    if (suggestion.class == 'SurveySuggestion') {
-                        var id = suggestion.data.survey.surveyId;
-                        var dayCanShowAgain = suggestion.data.dayCanShowAgain;
 
-                        var newCookieValue = id + '=' + dayCanShowAgain;
-
-                        var currentCookieValues = cookies.get('GU_TAILOR_SURVEY');
-
-                        if (currentCookieValues) {
-                            // we've shown surveys already
-                            currentCookieValues = currentCookieValues + ',' + newCookieValue;
-                            cookies.remove('GU_TAILOR_SURVEY');
-                            cookies.add('GU_TAILOR_SURVEY', currentCookieValues, 365);
-                        }
-                        else {
-                            // first time we show any survey
-                            cookies.add('GU_TAILOR_SURVEY', newCookieValue, 365);
-                        }
-                    }
+                var surveySuggestions = response.suggestions.filter(function(suggestion) {
+                    return suggestion.class == 'SurveySuggestion';
                 });
+
+                if(surveySuggestions){
+                    var surveySuggestionToShow = surveySuggestions[0];
+                    var id = surveySuggestionToShow.data.survey.surveyId;
+                    var dayCanShowAgain = surveySuggestionToShow.data.dayCanShowAgain;
+
+                    var newCookieValue = id + '=' + dayCanShowAgain;
+
+                    var currentCookieValues = cookies.get('GU_TAILOR_SURVEY');
+
+                    if (currentCookieValues) {
+                        // we've shown surveys already
+                        currentCookieValues = currentCookieValues + ',' + newCookieValue;
+                        cookies.remove('GU_TAILOR_SURVEY');
+                        cookies.add('GU_TAILOR_SURVEY', currentCookieValues, 365);
+                    }
+                    else {
+                        // first time we show any survey
+                        cookies.add('GU_TAILOR_SURVEY', newCookieValue, 365);
+                    }
+                }
             }
 
         }
