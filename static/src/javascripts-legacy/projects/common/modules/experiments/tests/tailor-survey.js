@@ -47,8 +47,9 @@ define([
                 config.page.contentType === 'Article'
         };
 
-        function callTailor(bwid) {
-            var endpoint = 'https://tailor.guardianapis.com/suggestions?browserId=' + bwid + '&edition=' + config.page.edition + '&alwaysShowSurvey=true';
+        function callTailor(bwid, surveysNotShowAgain) {
+            var endpoint = 'https://tailor.guardianapis.com/suggestions?browserId=' + bwid + '&edition=' + config.page.edition + '&alwaysShowSurvey=true' + '&surveysNotToShow=' + surveysNotShowAgain;
+            console.log(endpoint);
             return fetchJson(endpoint, {
                 type: 'json',
                 method: 'get'
@@ -62,9 +63,6 @@ define([
                         var id = suggestion.data.survey.surveyId;
                         var dayCanShowAgain = suggestion.data.dayCanShowAgain;
 
-                        console.log(id);
-                        console.log(dayCanShowAgain);
-
                         var newCookieValue = id + '=' + dayCanShowAgain;
 
                         var currentCookieValues = cookies.get('GU_TAILOR_SURVEY');
@@ -72,13 +70,11 @@ define([
                         if (currentCookieValues) {
                             // we've shown surveys already
                             currentCookieValues = currentCookieValues + ',' + newCookieValue;
-                            console.log(currentCookieValues)
                             cookies.remove('GU_TAILOR_SURVEY');
                             cookies.add('GU_TAILOR_SURVEY', currentCookieValues, 365);
                         }
                         else {
                             // first time we show any survey
-                            console.log("first time")
                             cookies.add('GU_TAILOR_SURVEY', newCookieValue, 365);
                         }
                     }
@@ -89,15 +85,28 @@ define([
 
         function renderQuickSurvey() {
             var bwid = cookies.get('bwid');
-            var hasSeenTheSurveyAlready = cookies.get('GU_TAILOR_SURVEY_1') || false;
 
-            if (bwid && !hasSeenTheSurveyAlready) {
-                return callTailor(bwid).then(function (response) {
-                    console.log(response)
+            var currentCookieValues = cookies.get('GU_TAILOR_SURVEY');
+
+            var values = currentCookieValues ? currentCookieValues.split(',') : [];
+
+            var isAfterToday = function(cookieValue) {
+                var date = cookieValue.split('=')[1];
+                return new Date(date).valueOf() > new Date().valueOf();
+            };
+
+            var surveysWeCannotShow = values.filter(isAfterToday);
+
+            var ids = surveysWeCannotShow.map(function(idAndDate) {
+                return idAndDate.split('=')[0]
+            }).toString();
+
+
+
+            if (bwid) {
+                return callTailor(bwid, ids).then(function (response) {
+                    console.log(response);
                     if (response.userDataForClient.regular) {
-
-                        // cookies.add('GU_TAILOR_SURVEY_1', 1, 100); // do not show this survey to the user for the next 100 days
-
 
                         handleSurveySuggestions(response);
 
