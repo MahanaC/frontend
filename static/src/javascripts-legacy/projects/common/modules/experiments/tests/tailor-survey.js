@@ -48,11 +48,43 @@ define([
         };
 
         function callTailor(bwid) {
-            var endpoint = 'https://tailor.guardianapis.com/suggestions?browserId=' + bwid;
+            var endpoint = 'https://tailor.guardianapis.com/suggestions?browserId=' + bwid + '&edition=' + config.page.edition + '&alwaysShowSurvey=true';
             return fetchJson(endpoint, {
                 type: 'json',
                 method: 'get'
             });
+        }
+
+        function handleSurveySuggestions(response) {
+            if (response.suggestions) {
+                forEach(response.suggestions, function(suggestion) {
+                    if (suggestion.class == 'SurveySuggestion') {
+                        var id = suggestion.data.survey.surveyId;
+                        var dayCanShowAgain = suggestion.data.dayCanShowAgain;
+
+                        console.log(id);
+                        console.log(dayCanShowAgain);
+
+                        var newCookieValue = id + '=' + dayCanShowAgain;
+
+                        var currentCookieValues = cookies.get('GU_TAILOR_SURVEY');
+
+                        if (currentCookieValues) {
+                            // we've shown surveys already
+                            currentCookieValues = currentCookieValues + ',' + newCookieValue;
+                            console.log(currentCookieValues)
+                            cookies.remove('GU_TAILOR_SURVEY');
+                            cookies.add('GU_TAILOR_SURVEY', currentCookieValues, 365);
+                        }
+                        else {
+                            // first time we show any survey
+                            console.log("first time")
+                            cookies.add('GU_TAILOR_SURVEY', newCookieValue, 365);
+                        }
+                    }
+                });
+            }
+
         }
 
         function renderQuickSurvey() {
@@ -61,10 +93,15 @@ define([
 
             if (bwid && !hasSeenTheSurveyAlready) {
                 return callTailor(bwid).then(function (response) {
+                    console.log(response)
                     if (response.userDataForClient.regular) {
 
-                        cookies.add('GU_TAILOR_SURVEY_1', 1, 100); // do not show this survey to the user for the next 100 days
+                        // cookies.add('GU_TAILOR_SURVEY_1', 1, 100); // do not show this survey to the user for the next 100 days
 
+
+                        handleSurveySuggestions(response);
+
+                        // renders the survey
                         return fastdomPromise.write(function () {
                             var article = document.getElementsByClassName('content__article-body')[0];
                             var insertionPoint = article.getElementsByTagName('p')[1];
@@ -128,11 +165,13 @@ define([
             {
                 id: 'control',
                 test: function () {
+                    console.log("control here ciao blabla")
                 }
             },
             {
                 id: 'variant',
                 test: function () {
+                    console.log('variant!');
                     Promise.all([renderQuickSurvey(), privateBrowsing]).then(function () {
                         mediator.emit('survey-added');
                         handleSurveyResponse();
