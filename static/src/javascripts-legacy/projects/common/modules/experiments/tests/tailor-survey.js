@@ -85,9 +85,7 @@ define([
 
         }
 
-        function renderQuickSurvey() {
-            var bwid = cookies.get('bwid');
-
+        function getSurveyIdsNotToShow() {
             var currentCookieValues = cookies.get('GU_TAILOR_SURVEY');
 
             var values = currentCookieValues ? currentCookieValues.split(',') : [];
@@ -103,6 +101,13 @@ define([
                 return idAndDate.split('=')[0]
             }).toString();
 
+            return ids;
+        }
+
+        function renderQuickSurvey() {
+            var bwid = cookies.get('bwid');
+
+            var ids = getSurveyIdsNotToShow();
 
             if (bwid) {
                 return callTailor(bwid, ids).then(function (response) {
