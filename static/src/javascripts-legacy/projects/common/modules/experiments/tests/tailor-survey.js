@@ -76,7 +76,6 @@ define([
 
         function getSurveySuggestionToShow(response) {
             if (response.suggestions) {
-
                 var surveySuggestions = response.suggestions.filter(function (suggestion) {
                     return suggestion.class == 'SurveySuggestion';
                 });
@@ -99,11 +98,9 @@ define([
 
             var surveysWeCannotShow = values.filter(isAfterToday);
 
-            var ids = surveysWeCannotShow.map(function (idAndDate) {
+            return surveysWeCannotShow.map(function (idAndDate) {
                 return idAndDate.split('=')[0]
             }).toString();
-
-            return ids;
         }
 
         function renderQuickSurvey() {
@@ -126,7 +123,10 @@ define([
                         var surveyDiv = document.createElement('div');
                         surveyDiv.innerHTML = quickSurvey;
                         article.insertBefore(surveyDiv, insertionPoint);
+                        return surveySuggestionToShow.data.survey.surveyId;
                     });
+
+                    // return surveySuggestionToShow.data.survey.surveyId;
                 });
             }
         }
@@ -148,14 +148,14 @@ define([
             surveyThanks[0].classList.add('js-impressions-survey__fadein');
         }
 
-        function handleSurveyResponse() {
+        function handleSurveyResponse(surveyId) {
             var surveyQuestions = document.getElementsByClassName('fi-survey__button');
 
             forEach(surveyQuestions, function (question) {
                     bean.on(question, 'click', function (event) {
                         if (event.target.attributes.getNamedItem("data-link-name")) {
                             var answer = event.target.attributes.getNamedItem("data-link-name").value;
-                            recordOphanAbEvent(answer);
+                            recordOphanAbEvent(answer, surveyId);
 
                             mediator.emit('tailor:survey:clicked');
                             fastdom.write(function () {
@@ -169,10 +169,10 @@ define([
             );
         }
 
-        function recordOphanAbEvent(answer) {
+        function recordOphanAbEvent(answer, surveyId) {
             require(['ophan/ng'], function (ophan) {
                 ophan.record({
-                    component: 'tailor-survey',
+                    component: 'tailor-survey-' + surveyId,
                     value: answer
                 });
             });
@@ -190,9 +190,9 @@ define([
                 test: function () {
                     cookies.add("bwid", "KhaK6MqWrTTNyPkt8dVyf1SA", 365)
                     console.log('variant!');
-                    Promise.all([renderQuickSurvey(), privateBrowsing]).then(function () {
+                    Promise.all([renderQuickSurvey(), privateBrowsing]).then(function (surveyId) {
                         mediator.emit('survey-added');
-                        handleSurveyResponse();
+                        handleSurveyResponse(surveyId);
                     });
                 },
                 impression: function (track) {
