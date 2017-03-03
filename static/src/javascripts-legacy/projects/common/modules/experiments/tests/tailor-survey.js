@@ -31,11 +31,11 @@ define([
         this.id = 'TailorSurvey';
         this.start = '2017-01-25';
         this.expiry = '2017-03-31';
-        this.author = 'Manlio';
+        this.author = 'Manlio & Mahana';
         this.description = 'Testing Tailor surveys';
         this.audience = 0.01;
         this.audienceOffset = 0.7;
-        this.successMeasure = 'We can show a survey on Frontend to regular users only (as decided by Tailor)';
+        this.successMeasure = 'We can show a survey on Frontend as decided by Tailor';
         this.audienceCriteria = 'All users';
         this.dataLinkNames = 'Tailor survey';
         this.idealOutcome = '';
@@ -54,7 +54,27 @@ define([
             });
         }
 
-        function handleSurveySuggestions(response) {
+        function storeSurveyShowedInCookie(surveySuggestionToShow) {
+            var id = surveySuggestionToShow.data.survey.surveyId;
+            var dayCanShowAgain = surveySuggestionToShow.data.dayCanShowAgain;
+
+            var newCookieValue = id + '=' + dayCanShowAgain;
+
+            var currentCookieValues = cookies.get('GU_TAILOR_SURVEY');
+
+            if (currentCookieValues) {
+                // we've shown surveys already
+                currentCookieValues = currentCookieValues + ',' + newCookieValue;
+                cookies.remove('GU_TAILOR_SURVEY');
+                cookies.add('GU_TAILOR_SURVEY', currentCookieValues, 365);
+            }
+            else {
+                // first time we show any survey
+                cookies.add('GU_TAILOR_SURVEY', newCookieValue, 365);
+            }
+        }
+
+        function getSurveySuggestionToShow(response) {
             if (response.suggestions) {
 
                 var surveySuggestions = response.suggestions.filter(function (suggestion) {
@@ -62,27 +82,9 @@ define([
                 });
 
                 if (surveySuggestions) {
-                    var surveySuggestionToShow = surveySuggestions[0];
-                    var id = surveySuggestionToShow.data.survey.surveyId;
-                    var dayCanShowAgain = surveySuggestionToShow.data.dayCanShowAgain;
-
-                    var newCookieValue = id + '=' + dayCanShowAgain;
-
-                    var currentCookieValues = cookies.get('GU_TAILOR_SURVEY');
-
-                    if (currentCookieValues) {
-                        // we've shown surveys already
-                        currentCookieValues = currentCookieValues + ',' + newCookieValue;
-                        cookies.remove('GU_TAILOR_SURVEY');
-                        cookies.add('GU_TAILOR_SURVEY', currentCookieValues, 365);
-                    }
-                    else {
-                        // first time we show any survey
-                        cookies.add('GU_TAILOR_SURVEY', newCookieValue, 365);
-                    }
+                    return surveySuggestions[0];
                 }
             }
-
         }
 
         function getSurveyIdsNotToShow() {
@@ -113,7 +115,9 @@ define([
                 return callTailor(bwid, ids).then(function (response) {
                     console.log(response);
 
-                    handleSurveySuggestions(response);
+                    var surveySuggestionToShow = getSurveySuggestionToShow(response);
+
+                    storeSurveyShowedInCookie(surveySuggestionToShow);
 
                     // renders the survey
                     return fastdomPromise.write(function () {
