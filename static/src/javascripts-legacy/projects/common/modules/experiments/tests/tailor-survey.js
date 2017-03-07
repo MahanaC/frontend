@@ -11,9 +11,9 @@ define([
     'lib/fastdom-promise',
     'lib/private-browsing',
     'raw-loader!common/views/experiments/tailor-survey.html',
-    'common/utils/fetch-json',
+    'lib/fetch-json',
     'lodash/collections/forEach',
-    'common/utils/template'
+    'lib/template'
 ], function (bean,
              bonzo,
              fastdom,
