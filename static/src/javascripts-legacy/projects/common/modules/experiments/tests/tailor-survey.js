@@ -156,8 +156,6 @@ define([
                         return fastdomPromise.write(function () {
                             var article = document.getElementsByClassName('content__article-body')[0];
                             var insertionPoint = article.getElementsByTagName('p')[1];
-                            var surveyDiv = document.createElement('div');
-                            // surveyDiv.innerHTML = tailorSurvey;
                             var survey = bonzo.create(template(tailorSurvey, json));
                             bonzo(survey).insertBefore(insertionPoint);
                             mediator.emit('register:end', componentName);
