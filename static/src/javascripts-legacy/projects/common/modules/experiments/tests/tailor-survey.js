@@ -13,7 +13,8 @@ define([
     'raw-loader!common/views/experiments/tailor-survey.html',
     'lib/fetch-json',
     'lodash/collections/forEach',
-    'lib/template'
+    'lib/template',
+        'ophan/ng'
 ], function (bean,
              bonzo,
              fastdom,
@@ -28,7 +29,9 @@ define([
              tailorSurvey,
              fetchJson,
              forEach,
-             template) {
+             template,
+             ophan) {
+
     return function () {
         this.id = 'TailorSurvey';
         this.start = '2017-03-07';
@@ -206,13 +209,13 @@ define([
         }
 
         function recordOphanAbEvent(answer, surveyId) {
-            require(['ophan/ng'], function (ophan) {
                 ophan.record({
                     component: 'tailor-survey-' + surveyId,
                     value: answer
                 });
-            });
+
         }
+
 
         this.variants = [
             {
